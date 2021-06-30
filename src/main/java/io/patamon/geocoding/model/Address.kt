@@ -34,6 +34,8 @@ open class Address : Serializable {
     var roadNum: String? = null
     // 建筑物信息
     var buildingNum: String? = null
+    // 详细地址
+    var detailNum: String? = null
     // 切分剩余未解析出来的地址
     var text: String? = null
 
@@ -57,13 +59,14 @@ open class Address : Serializable {
             address.road = entity.road
             address.roadNum = entity.roadNum
             address.buildingNum = entity.buildingNum
+            address.detailNum = entity.detailNum
             address.text = entity.text
             return address
         }
     }
 
     constructor()
-    constructor(provinceId: Long?, province: String?, cityId: Long?, city: String?, districtId: Long?, district: String?, streetId: Long?, street: String?, townId: Long?, town: String?, villageId: Long?, village: String?, road: String?, roadNum: String?, buildingNum: String?, text: String?) {
+    constructor(provinceId: Long?, province: String?, cityId: Long?, city: String?, districtId: Long?, district: String?, streetId: Long?, street: String?, townId: Long?, town: String?, villageId: Long?, village: String?, road: String?, roadNum: String?, buildingNum: String?, detailNum: String?, text: String?) {
         this.provinceId = provinceId
         this.province = province
         this.cityId = cityId
@@ -79,26 +82,16 @@ open class Address : Serializable {
         this.road = road
         this.roadNum = roadNum
         this.buildingNum = buildingNum
+        this.detailNum = detailNum
         this.text = text
     }
 
-    override fun toString(): String {
-        return "Address(\n\tprovinceId=$provinceId, province=$province, " +
-                "\n\tcityId=$cityId, city=$city, " +
-                "\n\tdistrictId=$districtId, district=$district, " +
-                "\n\tstreetId=$streetId, street=$street, " +
-                "\n\ttownId=$townId, town=$town, " +
-                "\n\tvillageId=$villageId, village=$village, " +
-                "\n\troad=$road, " +
-                "\n\troadNum=$roadNum, " +
-                "\n\tbuildingNum=$buildingNum, " +
-                "\n\ttext=$text\n)"
-
-    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
-        if (other !is Address) return false
+        if (javaClass != other?.javaClass) return false
+
+        other as Address
 
         if (provinceId != other.provinceId) return false
         if (province != other.province) return false
@@ -115,6 +108,7 @@ open class Address : Serializable {
         if (road != other.road) return false
         if (roadNum != other.roadNum) return false
         if (buildingNum != other.buildingNum) return false
+        if (detailNum != other.detailNum) return false
         if (text != other.text) return false
 
         return true
@@ -136,8 +130,13 @@ open class Address : Serializable {
         result = 31 * result + (road?.hashCode() ?: 0)
         result = 31 * result + (roadNum?.hashCode() ?: 0)
         result = 31 * result + (buildingNum?.hashCode() ?: 0)
+        result = 31 * result + (detailNum?.hashCode() ?: 0)
         result = 31 * result + (text?.hashCode() ?: 0)
         return result
+    }
+
+    override fun toString(): String {
+        return "Address(provinceId=$provinceId, province=$province, cityId=$cityId, city=$city, districtId=$districtId, district=$district, streetId=$streetId, street=$street, townId=$townId, town=$town, villageId=$villageId, village=$village, road=$road, roadNum=$roadNum, buildingNum=$buildingNum, detailNum=$detailNum, text=$text)"
     }
 
 }

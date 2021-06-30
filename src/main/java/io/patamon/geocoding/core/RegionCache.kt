@@ -1,6 +1,6 @@
-package io.patamon.geocoding.core;
+package io.patamon.geocoding.core
 
-import io.patamon.geocoding.model.RegionEntity;
+import io.patamon.geocoding.model.RegionEntity
 
 /**
  * Desc: 获取 region entity 的抽象接口

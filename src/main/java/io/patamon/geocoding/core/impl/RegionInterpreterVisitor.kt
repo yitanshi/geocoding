@@ -164,7 +164,7 @@ open class RegionInterpreterVisitor (
                         || region.type == RegionType.Street
                         || region.type == RegionType.Town) { //街道、乡镇
                     when (text[pos + 1]) {
-                        '区', '县', '乡', '镇', '村', '街', '路' -> continue@loop
+                        '区', '县', '乡', '镇', '村', '街', '路', '庄' -> continue@loop
                         '大' -> if (pos + 2 <= text.length - 1) {
                             val c = text[pos + 2]
                             if (c == '街' || c == '道') continue@loop

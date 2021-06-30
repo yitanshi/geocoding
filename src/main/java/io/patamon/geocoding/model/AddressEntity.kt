@@ -47,6 +47,11 @@ open class AddressEntity constructor() : Division(), Serializable {
      */
     var address: String? = null
 
+    var detailNum: String? = null
+    set(value) {
+        if (value == null) field = "" else field = value.trim()
+    }
+
     constructor(address: String?) : this() {
         this.address = address
         this.text = address

@@ -161,7 +161,7 @@ open class SimilarityComputer : Computer {
 
         val sb = StringBuilder()
         var isTen = false // 是否含有十
-        loop@ for (i in 0..roadNum!!.length - 1) {
+        loop@ for (i in 0..roadNum.length - 1) {
             val c = roadNum.get(i)
 
             // 识别汉字中的 "十", 由于 "十号" 和 "二十号" 的意义不同
@@ -228,7 +228,7 @@ open class SimilarityComputer : Computer {
      */
     private fun translateBuilding(building: String?): List<String>  {
         if (building.isNullOrBlank()) return emptyList()
-        return simpleSegmenter.segment(building!!)
+        return simpleSegmenter.segment(building)
     }
 
     /**

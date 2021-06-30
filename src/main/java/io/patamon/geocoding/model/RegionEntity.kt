@@ -71,6 +71,8 @@ open class RegionEntity : Serializable {
     }
 
     override fun toString(): String {
-        return "${this.id}:${this.name}"
+        return "RegionEntity(id=$id, parentId=$parentId, name='$name', alias='$alias', type=$type, zip='$zip', children=$children)"
     }
+
+
 }

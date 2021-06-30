@@ -1,6 +1,6 @@
-package io.patamon.geocoding.core;
+package io.patamon.geocoding.core
 
-import io.patamon.geocoding.index.TermIndexEntry;
+import io.patamon.geocoding.index.TermIndexEntry
 import io.patamon.geocoding.model.Division
 
 /**

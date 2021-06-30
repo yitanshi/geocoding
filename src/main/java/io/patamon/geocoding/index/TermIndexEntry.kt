@@ -31,7 +31,7 @@ open class TermIndexEntry {
      * 初始化倒排索引
      */
     fun buildIndex(text: String?, pos: Int, item: TermIndexItem) {
-        if (text.isNullOrBlank() || pos < 0 || pos >=text!!.length) {
+        if (text.isNullOrBlank() || pos < 0 || pos >= text.length) {
             return
         }
         val c = text[pos]

@@ -1,12 +1,20 @@
 package io.patamon.geocoding.core.impl
 
+import cn.hutool.core.io.FileUtil
 import com.google.gson.Gson
+import com.sun.xml.internal.messaging.saaj.packaging.mime.util.ASCIIUtility.getBytes
 import io.patamon.geocoding.core.RegionCache
 import io.patamon.geocoding.model.RegionEntity
 import io.patamon.geocoding.model.RegionType
 import java.io.ByteArrayInputStream
+import java.io.ByteArrayOutputStream
+import java.nio.charset.Charset
 import java.util.*
 import java.util.zip.GZIPInputStream
+import java.util.zip.GZIPOutputStream
+
+
+
 
 /**
  * Desc: 默认 [RegionEntity] 获取的缓存类
@@ -23,7 +31,9 @@ open class DefaultRegoinCache : RegionCache {
     init {
         // 加载区域数据
         if (regions == null) {
-            regions = Gson().fromJson(decode(String(this.javaClass.classLoader.getResourceAsStream("core/region.dat").readBytes())), RegionEntity::class.java)
+            var decode_regions = String(this.javaClass.classLoader.getResourceAsStream("core/decode_regions.json").readBytes())
+//            FileUtil.writeString(decode_regions, "data/decode_regions.json", Charset.defaultCharset())
+            regions = Gson().fromJson(decode_regions, RegionEntity::class.java)
         }
         // 加载cache
         REGION_CACHE.put(regions!!.id, regions!!)
@@ -49,6 +59,15 @@ open class DefaultRegoinCache : RegionCache {
      */
     private fun decode(dat: String): String {
         return String(GZIPInputStream(ByteArrayInputStream(Base64.getMimeDecoder().decode(dat))).readBytes())
+    }
+
+    private fun encode(dat: String): String{
+        val out = ByteArrayOutputStream()
+        val gzip = GZIPOutputStream(out)
+        gzip.write(dat.toByteArray())
+        gzip.flush()
+        gzip.close()
+        return out.toString()
     }
 
     /**

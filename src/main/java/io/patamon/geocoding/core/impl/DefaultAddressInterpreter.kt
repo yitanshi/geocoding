@@ -8,11 +8,7 @@ import io.patamon.geocoding.index.TermIndexBuilder
 import io.patamon.geocoding.index.TermType
 import io.patamon.geocoding.model.AddressEntity
 import io.patamon.geocoding.model.RegionEntity
-import io.patamon.geocoding.utils.head
-import io.patamon.geocoding.utils.remove
-import io.patamon.geocoding.utils.removeRepeatNum
-import io.patamon.geocoding.utils.tail
-import io.patamon.geocoding.utils.take
+import io.patamon.geocoding.utils.*
 import java.util.regex.Pattern
 
 /**
@@ -42,9 +38,16 @@ open class DefaultAddressInterpreter : AddressInterpreter {
 
     companion object {
         // 特殊字符1
-        private val specialChars1 = "　 \r\n\t,，。·.．;；:：、！@$%*^`~=+&'\"|_-\\/".toCharArray()
+        private val specialChars1 = "　 \r\n\t,，。·.．;；:：！@$%*^`~=+&'\"|_-\\/".toCharArray()
         // 包裹的特殊字符2
         private val specialChars2 = "{}【】〈〉<>[]「」“”（）()".toCharArray()
+
+        /**
+         * 用于切分单元楼号
+         */
+        private val P_BUILDING_SPLIT0 = Pattern.compile(
+                "(号院|栋|橦|幢|座|号楼|号|楼|\\#楼?)"
+        )
 
         /**
          * 匹配没有路号的情况
@@ -53,8 +56,9 @@ open class DefaultAddressInterpreter : AddressInterpreter {
          */
         private val P_BUILDING_NUM0 = Pattern.compile(
                 //"((路|街|巷)[0-9]+号([0-9A-Z一二三四五六七八九十][\\#\\-一－/\\\\]|楼)?)?([0-9A-Z一二三四五六七八九十]+(栋|橦|幢|座|号楼|号|\\#楼?)){0,1}([一二三四五六七八九十东西南北甲乙丙0-9]+([\\#\\-一－/\\\\]|单元|门|梯|层|座))?([0-9]+(室|房)?)?"
-                "((路|街|巷)[0-9]+号([0-9A-Z一二三四五六七八九十][\\#\\-一－—/\\\\]|楼)?)?([0-9A-Z一二三四五六七八九十]+(栋|橦|幢|座|号楼|号|楼|\\#楼?)){0,1}([一二三四五六七八九十东西南北甲乙丙0-9]+([\\#\\-一－—/\\\\]|单元|门|梯|层|座|组))?([0-9]+([\\#\\-一－—/\\\\]|室|房|层|楼|号|户)?)?([0-9]+号?)?"
+                "((路|街|巷)[0-9]+号([0-9A-Z一二三四五六七八九十][\\#\\-一－—/\\\\]|楼)?)?([0-9A-Z一二三四五六七八九十]+(号院|栋|橦|幢|座|号楼|号|楼|\\#楼?)){0,1}([一二三四五六七八九十东西南北甲乙丙0-9]+([\\#\\-一－—/\\\\]|单元|门|梯|层|座|组))?([0-9]+([\\#\\-一－—/\\\\]|室|房|层|楼|号|户)?)?([0-9]+号?)?"
         )
+
         /**
          * 标准匹配building的模式：xx栋xx单元xxx。<br />
          *   注1：山东青岛市南区宁夏路118号4号楼6单元202。如果正则模式开始位置不使用(路[0-9]+号)?，则第一个符合条件的匹配结果是【118号4】,
@@ -63,13 +67,13 @@ open class DefaultAddressInterpreter : AddressInterpreter {
          *   所以需要先匹配 (路[0-9]+号)?
          */
         private val P_BUILDING_NUM1 = Pattern.compile(
-                "((路|街|巷)[0-9]+号)?([0-9A-Z一二三四五六七八九十]+(栋|橦|幢|座|号楼|号|\\#楼?)){0,1}([一二三四五六七八九十东西南北甲乙丙0-9]+(单元|门|梯|层|座))?([0-9]+(室|房)?)?"
+                "((路|街|巷)[0-9]+号)?([0-9A-Z一二三四五六七八九十]+(号院|栋|橦|幢|座|号楼|号|\\#楼?)){0,1}([一二三四五六七八九十东西南北甲乙丙0-9]+(单元|门|梯|层|座))?([0-9]+(室|房)?)?"
         )
         /**
          * 校验building的模式。building1M能够匹配到纯数字等不符合条件的文本，使用building1V排除掉
          */
         private val P_BUILDING_NUM_V = Pattern.compile(
-                "(栋|幢|橦|号楼|号|\\#|\\#楼|单元|室|房|门)+"
+                "(号院|栋|幢|橦|号楼|号|\\#|\\#楼|单元|室|房|门)+"
         )
         /**
          * 匹配building的模式：12-2-302，12栋3单元302
@@ -83,6 +87,12 @@ open class DefaultAddressInterpreter : AddressInterpreter {
         private val P_BUILDING_NUM3 = Pattern.compile(
                 "[0-9]+(组|通道)[A-Z0-9\\-一]+号?"
         )
+        /**
+         * 匹配building的模式：10号院21单元
+         */
+        private val P_BUILDING_NUM4 = Pattern.compile(
+                "[0-9]+(号院)*单元?"
+        )
 
         // 简单括号匹配
         private val BRACKET_PATTERN = Pattern.compile(
@@ -95,7 +105,7 @@ open class DefaultAddressInterpreter : AddressInterpreter {
         )
         // 道路中未匹配到的building信息
         private val P_ROAD_BUILDING = Pattern.compile(
-                "[0-9A-Z一二三四五六七八九十]+(栋|橦|幢|座|号楼|号|\\#楼?)"
+                "[0-9A-Z一二三四五六七八九十]+(栋|号院|橦|幢|座|号楼|号|\\#楼?)"
         )
 
         // 村信息
@@ -201,6 +211,7 @@ open class DefaultAddressInterpreter : AddressInterpreter {
                 invalidTown.add("庙镇")
                 invalidTown.add("河镇")
                 invalidTown.add("村镇")
+                invalidTown.add("村庄")
         }
     }
 
@@ -220,6 +231,8 @@ open class DefaultAddressInterpreter : AddressInterpreter {
         prepare(entity)
         // extractBuildingNum, 提取建筑物号
         extractBuildingNum(entity)
+        // 从建筑物号里提取出楼号和详细地址
+        splitBuildingNum(entity)
         // 去除特殊字符
         removeSpecialChars(entity)
         // 提取包括的数据
@@ -234,7 +247,7 @@ open class DefaultAddressInterpreter : AddressInterpreter {
         // 提取道路信息
         extractRoad(entity)
         // 提取农村信息
-        // extractTownVillage(entity)
+         extractTownVillage(entity)
 
         entity.text = entity.text!!.replace("[0-9A-Za-z\\#]+(单元|楼|室|层|米|户|\\#)", "")
         entity.text = entity.text!!.replace("[一二三四五六七八九十]+(单元|楼|室|层|米|户)", "")
@@ -259,6 +272,18 @@ open class DefaultAddressInterpreter : AddressInterpreter {
 
         // 将地址中的 ー－—- 等替换为-
         entity.text = entity.text?.replace(Regex("[ー_－—/]|(--)"), "-")
+    }
+
+    // 切分建筑物号为楼号和详细地址
+    private fun splitBuildingNum(entity: AddressEntity): Boolean {
+        if (entity.text.isNullOrBlank()) return false
+        // 使用  先进行匹配
+        var splitBuilderNumber = entity.buildingNum?.split(P_BUILDING_SPLIT0)
+        entity.buildingNum = splitBuilderNumber?.get(0)
+        if (splitBuilderNumber != null && splitBuilderNumber.size > 1){
+            entity.detailNum = splitBuilderNumber[splitBuilderNumber.size - 1]
+        }
+        return true
     }
 
     // 提取建筑物号
@@ -338,6 +363,15 @@ open class DefaultAddressInterpreter : AddressInterpreter {
                 found = true
             }
         }
+        if (!found) {
+            //xx号院xx单元
+            matcher = P_BUILDING_NUM4.matcher(entity.text)
+            if (matcher.find()) {
+                entity.buildingNum = entity.text!!.take(matcher.start(), matcher.end() - 1)
+                entity.text = entity.text.head(matcher.start()) + entity.text!!.take(matcher.end())
+                found = true
+            }
+        }
         return found
     }
 
@@ -356,7 +390,7 @@ open class DefaultAddressInterpreter : AddressInterpreter {
         // 去除building
         var building = entity.buildingNum
         if (building.isNullOrBlank()) return
-        building = building!!.remove(specialChars1, "-一－_#")
+        building = building.remove(specialChars1, "-一－_#")
         building = building.removeRepeatNum(6)
         entity.buildingNum = building
     }
@@ -573,7 +607,7 @@ open class DefaultAddressInterpreter : AddressInterpreter {
             }
 
             if (!c.isNullOrBlank()) { //村
-                if (c!!.endsWith("农村")) return result
+                if (c.endsWith("农村")) return result
                 var leftString = text.take(ic)
                 if (c.endsWith("村村")) {
                     c = c.head(c.length - 1)
@@ -628,7 +662,7 @@ open class DefaultAddressInterpreter : AddressInterpreter {
         }
 
         // 排除一些特殊情况：草滩街镇、西乡街镇等
-        if (town!!.length == 4 && town[2] == '街') return -1
+        if (town.length == 4 && town[2] == '街') return -1
 
         return 1
     }

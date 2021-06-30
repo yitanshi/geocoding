@@ -1,4 +1,4 @@
-package io.patamon.geocoding;
+package io.patamon.geocoding
 
 import io.patamon.geocoding.core.Context
 import io.patamon.geocoding.model.Address
@@ -21,7 +21,8 @@ object Geocoding {
      */
     @JvmStatic
     fun normalizing(address: String): Address? {
-        return build(Context.getInterpreter().interpret(address))
+        var addressEntity = build(Context.getInterpreter().interpret(address))
+        return addressEntity
     }
 
     /**
@@ -96,4 +97,11 @@ object Geocoding {
         val indexBuilder = this.getContext().getInterpreter().getTermIndexBuilder()
         indexBuilder.indexRegions(listOf(region))
     }
+
+    @JvmStatic
+    fun main(args: Array<String>) {
+        println(analyze("北京市海淀区温泉镇西颐社区西颐小区门卫北侧北京中科慧杰分析科技有限公司"))
+//        println(similarity("北京,东城,北新桥,前永康","北京市海淀区温泉镇辛庄村高里掌路3号院17号楼"))
+    }
+
 }
